@@ -1,0 +1,24 @@
+[package]
+name = "skyrim_cell_dump"
+version = "0.1.0"
+authors = ["Tyler Hallada <tyler@hallada.net>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+argh = { version = "0.1", optional = true }
+bitflags = "1.2"
+flate2 = "1.0"
+nom = "6"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", optional = true }
+
+[features]
+build-binary = ["argh", "serde_json"]
+
+[[bin]]
+name = "skyrim-cell-dump"
+path = "src/bin/cli.rs"
+required-features = ["build-binary"]
