@@ -364,7 +364,6 @@ fn parse_field_header(input: &[u8]) -> IResult<&[u8], FieldHeader> {
         todo!()
     }
     let (input, size) = le_u16(input)?;
-    // let (input, data) = take(size)(input)?;
     Ok((input, FieldHeader { field_type, size }))
 }
 

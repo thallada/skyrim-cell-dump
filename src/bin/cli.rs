@@ -17,10 +17,7 @@ impl FromStr for Format {
     fn from_str(s: &str) -> Result<Self> {
         match s.trim().to_lowercase().as_str() {
             "json" => Ok(Format::Json),
-            "text" => Ok(Format::PlainText),
-            "plain" => Ok(Format::PlainText),
-            "plain_text" => Ok(Format::PlainText),
-            "plaintext" => Ok(Format::PlainText),
+            "text" | "plain" | "plain_text" | "plaintext" => Ok(Format::PlainText),
             _ => Err(anyhow!("Unrecognized format {}", s)),
         }
     }
