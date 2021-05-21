@@ -1,6 +1,6 @@
 # skyrim-cell-dump
 
-Library and binary for parsing Skyrim plugin files and extracing CELL data.
+Library and binary for parsing Skyrim plugin files and extracting CELL data.
 
 The main objective of this library is to extract the form ID and X and Y coordinates of every exterior cell a plugin edits as fast as possible, ignoring the rest of the plugin.
 

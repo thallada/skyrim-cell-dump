@@ -1,6 +1,6 @@
 //! # Skyrim Cell Dump
 //!
-//! `skyrim-cell-dump` is a library for parsing Skyrim plugin files and extracing CELL data into Rust structs.
+//! `skyrim-cell-dump` is a library for parsing Skyrim plugin files and extracting CELL data into Rust structs.
 #[macro_use]
 extern crate bitflags;
 
