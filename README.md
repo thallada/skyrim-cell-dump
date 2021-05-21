@@ -7,7 +7,7 @@ The main objective of this library is to extract the form ID and X and Y coordin
 ## Install
 
 ```
-cargo install skyrim_cell_dump
+cargo install skyrim-cell-dump
 ```
 
 Or, build yourself by checking out the repository and running:
@@ -87,6 +87,8 @@ The pretty JSON format looks something like:
 }
 ```
 
+Note: I have only tested parsing Skyrim Special Edition `.esp`, `.esm`, and `.esl` files.
+
 ## Import
 
 You can include this crate in your `Cargo.toml` and get the parsed `Plugin` struct with:
@@ -94,8 +96,6 @@ You can include this crate in your `Cargo.toml` and get the parsed `Plugin` stru
 ```rust
 use skyrim_cell_dump::parse_plugin;
 
-fn main() {
-    let plugin_contents = std::fs::read("Plugin.esp").unwrap();
-    let plugin = parse_plugin(&plugin_contents).unwrap();
-}
+let plugin_contents = std::fs::read("Plugin.esp").unwrap();
+let plugin = parse_plugin(&plugin_contents).unwrap();
 ```

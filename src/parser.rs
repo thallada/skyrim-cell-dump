@@ -14,12 +14,16 @@ use serde::Serialize;
 
 const HEADER_SIZE: u32 = 24;
 
+/// A parsed TES5 Skyrim plugin file
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Plugin<'a> {
+    /// Parsed [TES4 header record](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TES4) with metadata about the plugin
     pub header: PluginHeader<'a>,
+    /// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL) contained in the plugin
     pub cells: Vec<Cell>,
 }
 
+/// Parsed [TES4 header record](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TES4)
 #[derive(Debug, PartialEq, Serialize)]
 pub struct PluginHeader<'a> {
     pub version: f32,
@@ -30,12 +34,14 @@ pub struct PluginHeader<'a> {
     pub masters: Vec<&'a str>,
 }
 
+/// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL)
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Cell {
     pub form_id: u32,
     pub editor_id: Option<String>,
     pub x: Option<i32>,
     pub y: Option<i32>,
+    /// Indicates that this cell is a special persistent worldspace cell where all persistent references for the worldspace are stored
     pub is_persistent: bool,
 }
 
@@ -54,8 +60,9 @@ pub struct UnparsedCell<'a> {
     data: &'a [u8],
 }
 
+/// A CELL record that has had it's header parsed and data decompressed, but not yet parsed into individual fields
 #[derive(Debug)]
-pub struct DecompressedCell {
+struct DecompressedCell {
     pub form_id: u32,
     pub is_persistent: bool,
     pub data: Vec<u8>,
@@ -122,11 +129,8 @@ struct FieldHeader<'a> {
     size: u16,
 }
 
-pub fn parse_cell<'a>(
-    input: &'a [u8],
-    form_id: u32,
-    is_persistent: bool,
-) -> IResult<&'a [u8], Cell> {
+/// Parses fields from the decompressed bytes of a CELL record. Returns remaining bytes of the input after parsing and the parsed Cell struct.
+fn parse_cell<'a>(input: &'a [u8], form_id: u32, is_persistent: bool) -> IResult<&'a [u8], Cell> {
     let (input, cell_data) = parse_cell_fields(input)?;
     Ok((
         input,
@@ -140,7 +144,8 @@ pub fn parse_cell<'a>(
     ))
 }
 
-pub fn decompress_cells(unparsed_cells: Vec<UnparsedCell>) -> Result<Vec<DecompressedCell>> {
+/// Maps the input `UnparsedCell`s to `DecompressedCell`s and decompresses the zlib compressed data sections of the record if necessary
+fn decompress_cells(unparsed_cells: Vec<UnparsedCell>) -> Result<Vec<DecompressedCell>> {
     let mut decompressed_cells = Vec::new();
     for unparsed_cell in unparsed_cells {
         let decompressed_data = if unparsed_cell.is_compressed {
@@ -160,14 +165,27 @@ pub fn decompress_cells(unparsed_cells: Vec<UnparsedCell>) -> Result<Vec<Decompr
     Ok(decompressed_cells)
 }
 
-pub fn parse_header_and_cell_bytes(
-    input: &[u8],
-) -> IResult<&[u8], (PluginHeader, Vec<UnparsedCell>)> {
+/// Parses the plugin header and finds and extracts the headers and unparsed (and possibly compressed) data sections of every CELL record in the file.
+fn parse_header_and_cell_bytes(input: &[u8]) -> IResult<&[u8], (PluginHeader, Vec<UnparsedCell>)> {
     let (input, header) = parse_plugin_header(input)?;
     let (input, unparsed_cells) = parse_group_data(input, input.len() as u32, 0)?;
     Ok((input, (header, unparsed_cells)))
 }
 
+/// Parses header and cell records from input bytes of a plugin file and outputs `Plugin` struct with extracted fields.
+///
+/// # Arguments
+///
+/// * `input` - A slice of bytes read from the plugin file
+///
+/// # Examples
+///
+/// ```
+/// use skyrim_cell_dump::parse_plugin;
+///
+/// let plugin_contents = std::fs::read("Plugin.esp").unwrap();
+/// let plugin = parse_plugin(&plugin_contents).unwrap();
+/// ```
 pub fn parse_plugin(input: &[u8]) -> Result<Plugin> {
     let (_, (header, unparsed_cells)) = parse_header_and_cell_bytes(&input)
         .map_err(|_err| anyhow!("Failed to parse plugin header and find CELL data"))?;
