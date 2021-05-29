@@ -275,6 +275,7 @@ fn parse_plugin_header(input: &[u8]) -> IResult<&[u8], PluginHeader> {
     let mut author = None;
     let mut description = None;
     let mut masters = vec![];
+    let mut large_size = None;
     loop {
         let (remaining, field) = parse_field_header(input)?;
         input = remaining;
@@ -299,9 +300,20 @@ fn parse_plugin_header(input: &[u8]) -> IResult<&[u8], PluginHeader> {
                 input = remaining;
                 break;
             }
-            _ => {
-                let (remaining, _) = take(field.size)(input)?;
+            "XXXX" => {
+                let (remaining, size) = le_u32(input)?;
                 input = remaining;
+                large_size = Some(size);
+            }
+            _ => {
+                if let Some(size) = large_size {
+                    let (remaining, _) = take(size)(input)?;
+                    input = remaining;
+                    large_size = None;
+                } else {
+                    let (remaining, _) = take(field.size)(input)?;
+                    input = remaining;
+                }
             }
         }
     }
@@ -378,9 +390,6 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
 
 fn parse_field_header(input: &[u8]) -> IResult<&[u8], FieldHeader> {
     let (input, field_type) = parse_4char(input)?;
-    if field_type == "XXXX" {
-        todo!()
-    }
     let (input, size) = le_u16(input)?;
     Ok((input, FieldHeader { field_type, size }))
 }
@@ -399,6 +408,7 @@ fn parse_cell_fields<'a>(input: &'a [u8]) -> IResult<&'a [u8], CellData> {
         y: None,
     };
     let mut input = input;
+    let mut large_size = None;
     while !input.is_empty() {
         let (remaining, field) = parse_field_header(input)?;
         input = remaining;
@@ -416,9 +426,20 @@ fn parse_cell_fields<'a>(input: &'a [u8]) -> IResult<&'a [u8], CellData> {
                 let (remaining, _) = take(4usize)(remaining)?;
                 input = remaining;
             }
-            _ => {
-                let (remaining, _) = take(field.size)(input)?;
+            "XXXX" => {
+                let (remaining, size) = le_u32(input)?;
                 input = remaining;
+                large_size = Some(size);
+            }
+            _ => {
+                if let Some(size) = large_size {
+                    let (remaining, _) = take(size)(input)?;
+                    input = remaining;
+                    large_size = None;
+                } else {
+                    let (remaining, _) = take(field.size)(input)?;
+                    input = remaining;
+                }
             }
         }
     }
