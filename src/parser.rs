@@ -263,12 +263,14 @@ fn parse_group_data<'a>(
 }
 
 fn parse_plugin_header(input: &[u8]) -> IResult<&[u8], PluginHeader> {
-    let (mut input, _tes4) = verify(parse_record_header, |record_header| {
+    let (mut input, tes4) = verify(parse_record_header, |record_header| {
         record_header.record_type == "TES4"
     })(input)?;
-    let (remaining, _hedr) = verify(parse_field_header, |field_header| {
+    let mut consumed_bytes = 0;
+    let (remaining, hedr) = verify(parse_field_header, |field_header| {
         field_header.field_type == "HEDR"
     })(input)?;
+    consumed_bytes += hedr.size as u32 + 6;
     input = remaining;
     let (remaining, (version, num_records_and_groups, next_object_id)) = parse_hedr_fields(input)?;
     input = remaining;
@@ -276,8 +278,9 @@ fn parse_plugin_header(input: &[u8]) -> IResult<&[u8], PluginHeader> {
     let mut description = None;
     let mut masters = vec![];
     let mut large_size = None;
-    loop {
+    while consumed_bytes < tes4.size as u32 {
         let (remaining, field) = parse_field_header(input)?;
+        consumed_bytes += field.size as u32 + 6;
         input = remaining;
         match field.field_type {
             "CNAM" => {
