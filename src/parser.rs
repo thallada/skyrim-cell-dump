@@ -357,9 +357,9 @@ fn parse_record_header(input: &[u8]) -> IResult<&[u8], RecordHeader> {
     let (input, record_type) =
         verify(parse_4char, |record_type: &str| record_type != "GRUP")(input)?;
     let (input, size) = le_u32(input)?;
-    let (input, flags) = map_res(le_u32, |bits| {
-        RecordFlags::from_bits(bits).ok_or("bad record flag")
-    })(input)?;
+    let (input, flag_bits) = le_u32(input)?;
+    // Okay to truncate since we only care about bits we know about and don't want to crash on unknown bits.
+    let flags = RecordFlags::from_bits_truncate(flag_bits);
     let (input, id) = le_u32(input)?;
     let (input, timestamp) = le_u16(input)?;
     let (input, version_control_info) = le_u16(input)?;
