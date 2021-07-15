@@ -301,7 +301,6 @@ fn parse_plugin_header(input: &[u8]) -> IResult<&[u8], PluginHeader> {
             "INTV" => {
                 let (remaining, _) = take(field.size)(input)?;
                 input = remaining;
-                break;
             }
             "XXXX" => {
                 let (remaining, size) = le_u32(input)?;
