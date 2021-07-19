@@ -47,12 +47,19 @@ The pretty JSON format looks something like:
       "Dragonborn.esm"
     ]
   },
+  "worlds": [
+    {
+      "form_id": 60,
+      "editor_id": "Tamriel"
+    }
+  ],
   "cells": [
     {
       "form_id": 100000001,
       "editor_id": "SomeInterior",
       "x": null,
       "y": null,
+      "world_form_id": null,
       "is_persistent": false
     },
     {
@@ -60,6 +67,7 @@ The pretty JSON format looks something like:
       "editor_id": null,
       "x": 0,
       "y": 0,
+      "world_form_id": 60,
       "is_persistent": true
     },
     {
@@ -67,6 +75,7 @@ The pretty JSON format looks something like:
       "editor_id": "SomeExterior01",
       "x": 32,
       "y": 3,
+      "world_form_id": 60,
       "is_persistent": false
     },
     {
@@ -74,6 +83,7 @@ The pretty JSON format looks something like:
       "editor_id": "SomeExterior02",
       "x": 33,
       "y": 2,
+      "world_form_id": 60,
       "is_persistent": false
     },
     {
@@ -81,6 +91,7 @@ The pretty JSON format looks something like:
       "editor_id": null,
       "x": 32,
       "y": 1,
+      "world_form_id": 60,
       "is_persistent": false
     }
   ]
