@@ -336,7 +336,11 @@ fn parse_plugin_header(input: &[u8]) -> IResult<&[u8], PluginHeader> {
     let mut large_size = None;
     while consumed_bytes < tes4.size as u32 {
         let (remaining, field) = parse_field_header(input)?;
-        consumed_bytes += field.size as u32 + FIELD_HEADER_SIZE;
+        if let Some(size) = large_size {
+            consumed_bytes += size + FIELD_HEADER_SIZE;
+        } else {
+            consumed_bytes += field.size as u32 + FIELD_HEADER_SIZE;
+        }
         input = remaining;
         match field.field_type {
             "CNAM" => {
