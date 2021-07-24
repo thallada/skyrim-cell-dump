@@ -1,7 +1,9 @@
+use std::borrow::Cow;
 use std::io::Read;
 use std::{convert::TryInto, str};
 
 use anyhow::{anyhow, Result};
+use encoding_rs::WINDOWS_1252;
 use flate2::read::ZlibDecoder;
 use nom::{
     branch::alt,
@@ -32,9 +34,9 @@ pub struct PluginHeader<'a> {
     pub version: f32,
     pub num_records_and_groups: i32,
     pub next_object_id: u32,
-    pub author: Option<&'a str>,
-    pub description: Option<&'a str>,
-    pub masters: Vec<&'a str>,
+    pub author: Option<Cow<'a, str>>,
+    pub description: Option<Cow<'a, str>>,
+    pub masters: Vec<Cow<'a, str>>,
 }
 
 /// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL)
@@ -526,10 +528,9 @@ fn parse_4char(input: &[u8]) -> IResult<&[u8], &str> {
     map_res(take(4usize), |bytes: &[u8]| str::from_utf8(bytes))(input)
 }
 
-fn parse_zstring(input: &[u8]) -> IResult<&[u8], &str> {
-    let (input, zstring) = map_res(take_while(|byte| byte != 0), |bytes: &[u8]| {
-        str::from_utf8(bytes)
-    })(input)?;
+fn parse_zstring(input: &[u8]) -> IResult<&[u8], Cow<str>> {
+    let (input, bytes) = take_while(|byte| byte != 0)(input)?;
+    let (zstring, _, _) = WINDOWS_1252.decode(bytes);
     let (input, _) = take(1usize)(input)?;
     Ok((input, zstring))
 }
