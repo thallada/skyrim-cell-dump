@@ -487,8 +487,13 @@ fn parse_cell_fields<'a>(input: &'a [u8]) -> IResult<&'a [u8], CellData> {
                 let (remaining, y) = le_i32(remaining)?;
                 cell_data.x = Some(x);
                 cell_data.y = Some(y);
-                let (remaining, _) = take(4usize)(remaining)?;
-                input = remaining;
+                if field.size == 12 {
+                    // older (v. 0.94) files don't have the flags in this struct
+                    let (remaining, _) = take(4usize)(remaining)?;
+                    input = remaining;
+                } else {
+                    input = remaining;
+                }
             }
             "XXXX" => {
                 let (remaining, size) = le_u32(input)?;
