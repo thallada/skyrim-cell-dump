@@ -6,4 +6,4 @@ extern crate bitflags;
 
 mod parser;
 
-pub use parser::{parse_plugin, Cell, Plugin, PluginHeader};
+pub use parser::{parse_plugin, Cell, Plugin, PluginHeader, World};
