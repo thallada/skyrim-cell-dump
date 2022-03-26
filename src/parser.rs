@@ -40,7 +40,7 @@ pub struct PluginHeader<'a> {
 }
 
 /// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL)
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Cell {
     pub form_id: u32,
     pub editor_id: Option<String>,
@@ -78,7 +78,7 @@ struct DecompressedCell {
 }
 
 /// Parsed [WRLD records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WRLD)
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct World {
     /// Note that this `form_id` is relative to the plugin file, not what it would be in-game.
     /// The first byte of the `form_id` can be interpreted as an index into the `masters` array of the [`PluginHeader`].
