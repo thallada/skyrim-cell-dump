@@ -1,5 +1,7 @@
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::io::Read;
+use std::iter::FromIterator;
 use std::{convert::TryInto, str};
 
 use anyhow::{anyhow, Result};
@@ -78,7 +80,7 @@ struct DecompressedCell {
 }
 
 /// Parsed [WRLD records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WRLD)
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct World {
     /// Note that this `form_id` is relative to the plugin file, not what it would be in-game.
     /// The first byte of the `form_id` can be interpreted as an index into the `masters` array of the [`PluginHeader`].
@@ -196,7 +198,7 @@ fn decompress_cells(unparsed_cells: Vec<UnparsedCell>) -> Result<Vec<Decompresse
 /// Parses the plugin header and finds and extracts the headers and unparsed (and possibly compressed) data sections of every CELL record in the file.
 fn parse_header_and_cell_bytes(
     input: &[u8],
-) -> IResult<&[u8], (PluginHeader, Vec<World>, Vec<UnparsedCell>)> {
+) -> IResult<&[u8], (PluginHeader, HashSet<World>, Vec<UnparsedCell>)> {
     let (input, header) = parse_plugin_header(input)?;
     let (input, (worlds, unparsed_cells)) = parse_group_data(input, input.len() as u32, 0, None)?;
     Ok((input, (header, worlds, unparsed_cells)))
@@ -235,7 +237,7 @@ pub fn parse_plugin(input: &[u8]) -> Result<Plugin> {
 
     Ok(Plugin {
         header,
-        worlds,
+        worlds: Vec::from_iter(worlds),
         cells,
     })
 }
@@ -245,9 +247,9 @@ fn parse_group_data<'a>(
     remaining_bytes: u32,
     depth: usize,
     world_form_id: Option<u32>,
-) -> IResult<&'a [u8], (Vec<World>, Vec<UnparsedCell>)> {
+) -> IResult<&'a [u8], (HashSet<World>, Vec<UnparsedCell>)> {
     let mut input = input;
-    let mut worlds = vec![];
+    let mut worlds = HashSet::new();
     let mut cells = vec![];
     let mut consumed_bytes = 0;
     let mut world_form_id = world_form_id;
@@ -275,13 +277,13 @@ fn parse_group_data<'a>(
                     consumed_bytes += group_header.size;
                     continue;
                 }
-                let (remaining, (mut inner_worlds, mut inner_cells)) = parse_group_data(
+                let (remaining, (inner_worlds, mut inner_cells)) = parse_group_data(
                     remaining,
                     group_header.size - RECORD_HEADER_SIZE,
                     depth + 1,
                     world_form_id,
                 )?;
-                worlds.append(&mut inner_worlds);
+                worlds.extend(inner_worlds.into_iter());
                 cells.append(&mut inner_cells);
                 input = remaining;
                 consumed_bytes += group_header.size;
@@ -302,7 +304,7 @@ fn parse_group_data<'a>(
                 "WRLD" => {
                     world_form_id = Some(record_header.id);
                     let (remaining, editor_id) = parse_world_fields(remaining, &record_header)?;
-                    worlds.push(World {
+                    worlds.insert(World {
                         form_id: record_header.id,
                         editor_id,
                     });
