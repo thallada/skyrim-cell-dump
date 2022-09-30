@@ -25,9 +25,9 @@ pub struct Plugin<'a> {
     /// Parsed [TES4 header record](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TES4) with metadata about the plugin
     pub header: PluginHeader<'a>,
     /// Parsed [WRLD records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WRLD) contained in the plugin
-    pub worlds: Vec<World>,
+    pub worlds: HashSet<World>,
     /// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL) contained in the plugin
-    pub cells: Vec<Cell>,
+    pub cells: HashSet<Cell>,
 }
 
 /// Parsed [TES4 header record](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TES4)
@@ -42,7 +42,7 @@ pub struct PluginHeader<'a> {
 }
 
 /// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL)
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct Cell {
     pub form_id: u32,
     pub editor_id: Option<String>,
@@ -223,7 +223,7 @@ pub fn parse_plugin(input: &[u8]) -> Result<Plugin> {
         .map_err(|_err| anyhow!("Failed to parse plugin header and find CELL data"))?;
     let decompressed_cells = decompress_cells(unparsed_cells)?;
 
-    let mut cells = Vec::new();
+    let mut cells = HashSet::new();
     for decompressed_cell in decompressed_cells {
         let (_, cell) = parse_cell(
             &decompressed_cell.data,
@@ -232,12 +232,12 @@ pub fn parse_plugin(input: &[u8]) -> Result<Plugin> {
             decompressed_cell.world_form_id,
         )
         .unwrap();
-        cells.push(cell);
+        cells.insert(cell);
     }
 
     Ok(Plugin {
         header,
-        worlds: Vec::from_iter(worlds),
+        worlds,
         cells,
     })
 }
