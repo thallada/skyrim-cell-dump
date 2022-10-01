@@ -7,6 +7,8 @@ use std::{convert::TryInto, str};
 use anyhow::{anyhow, Result};
 use encoding_rs::WINDOWS_1252;
 use flate2::read::ZlibDecoder;
+use nom::combinator::rest;
+use nom::error::ParseError;
 use nom::{
     branch::alt,
     bytes::complete::{take, take_while},
@@ -502,13 +504,22 @@ fn parse_cell_fields<'a>(input: &'a [u8]) -> IResult<&'a [u8], CellData> {
                 input = remaining;
                 large_size = Some(size);
             }
+            "\0\0\0\0" => {
+                // Some plugins have 8-9 bytes of trailing null bytes in the decompressed interior CELL data
+                // This detects and skips those null bytes
+                let (remaining, _) = take_while(|c| c == b'\0')(input)?;
+                input = remaining;
+            }
             _ => {
                 if let Some(size) = large_size {
                     let (remaining, _) = take(size)(input)?;
                     input = remaining;
                     large_size = None;
                 } else {
-                    let (remaining, _) = take(field.size)(input)?;
+                    // Some plugins have decompressed cell data that is short 1-2 bytes and the parser is supposed
+                    // to substitute zero bytes there. Since we are not actually reading the fields at the end of
+                    // the CELL records, we just skip over the remaining bytes if the full 4 are not there.
+                    let (remaining, _) = alt((take(field.size), rest))(input)?;
                     input = remaining;
                 }
             }
