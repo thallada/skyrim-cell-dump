@@ -1,6 +1,6 @@
 [package]
 name = "skyrim-cell-dump"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2018"
 authors = ["Tyler Hallada <tyler@hallada.net>"]
 description = "Library and binary for parsing Skyrim plugin files and extracting CELL data"
