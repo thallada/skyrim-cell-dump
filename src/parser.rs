@@ -16,13 +16,13 @@ use nom::{
     number::complete::{le_f32, le_i32, le_u16, le_u32},
     IResult,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 const RECORD_HEADER_SIZE: u32 = 24;
 const FIELD_HEADER_SIZE: u32 = 6;
 
 /// A parsed TES5 Skyrim plugin file
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Plugin<'a> {
     /// Parsed [TES4 header record](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TES4) with metadata about the plugin
     pub header: PluginHeader<'a>,
@@ -33,7 +33,7 @@ pub struct Plugin<'a> {
 }
 
 /// Parsed [TES4 header record](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TES4)
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct PluginHeader<'a> {
     pub version: f32,
     pub num_records_and_groups: i32,
@@ -44,7 +44,7 @@ pub struct PluginHeader<'a> {
 }
 
 /// Parsed [CELL records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CELL)
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Cell {
     pub form_id: u32,
     pub editor_id: Option<String>,
@@ -82,7 +82,7 @@ struct DecompressedCell {
 }
 
 /// Parsed [WRLD records](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WRLD)
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct World {
     /// Note that this `form_id` is relative to the plugin file, not what it would be in-game.
     /// The first byte of the `form_id` can be interpreted as an index into the `masters` array of the [`PluginHeader`].
